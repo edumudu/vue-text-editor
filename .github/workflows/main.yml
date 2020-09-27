@@ -1,0 +1,25 @@
+name: Deploy
+
+on:
+  push: 
+    branches: 
+     - master
+  
+jobs: 
+  built-deploy:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      - name: Set-up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+
+      - run: yarn -v
+      - run: yarn
+      - run: yarn build
+      - run: yarn deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
