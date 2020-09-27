@@ -20,6 +20,11 @@ jobs:
       - run: yarn -v
       - run: yarn
       - run: yarn build
-      - run: yarn deploy
+
+      - name: Deploy
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
