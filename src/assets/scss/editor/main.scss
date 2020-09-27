@@ -1,0 +1,53 @@
+@import '@/assets/scss/_colors';
+
+.editor {
+  margin: 0 auto;
+  padding: 20px 25px;
+  background-color: #FFF;
+  border-radius: 5px;
+
+  &-menu {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+
+    .color_trigger { display: none; }
+    label {
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+  }
+}
+
+.input-head {
+  width: 45px;
+  height: 100%;
+  font-size: 17px;
+  border: none;
+  border-bottom: 1px solid var(--fuscosa);
+  outline: none;
+  cursor: pointer;
+}
+
+blockquote {
+  padding: 20px;
+  padding-left: 70px;
+  margin: 10px 0;
+  border-left: 5px solid var(--fuscosa);
+  border-radius: 8px;
+  background-color: rgba(51,51,51,0.05);
+
+  &::before {
+    content: 'format_quote';
+    margin-left: -55px;
+    margin-right: 5px;
+    font-family: 'Material Icons';
+    font-size: 50px;
+    font-weight: normal;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    direction: ltr;
+  }
+}
