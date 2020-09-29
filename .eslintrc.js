@@ -13,10 +13,15 @@ module.exports = {
     'max-len': ['error', 120],
     'import/prefer-default-export': 'off',
     'object-curly-newline': ['error', {
-      ObjectExpression: { multiline: true, minProperties: 2 },
+      ObjectExpression: {
+        multiline: true, minProperties: 2,
+      },
       ObjectPattern: { multiline: true },
       ImportDeclaration: 'never',
-      ExportDeclaration: { multiline: true, minProperties: 5 },
+      ExportDeclaration: {
+        multiline: true,
+        minProperties: 5,
+      },
     }],
   },
   overrides: [
