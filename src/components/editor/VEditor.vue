@@ -6,6 +6,7 @@
       :text-align="textAlign"
       :list-type="listType"
       @executeCommand="onExecuteCommand"
+      @execute-command="onExecuteCommand"
     />
 
     <v-editor-body
@@ -15,10 +16,6 @@
       @updateModel:textAlign="textAlign = $event"
       @updateModel:listType="listType = $event"
     />
-
-    {{ fontColor }}
-    {{ fontSize }}
-    {{ textAlign }}
   </div>
 </template>
 
@@ -26,13 +23,14 @@
 import { defineComponent, Ref, ref } from '@vue/composition-api';
 import VEditorHead from '@/components/editor/VEditorHead.vue';
 import VEditorBody from '@/components/editor/VEditorBody.vue';
-import { useSelection } from '@/shared/selection';
+import { useRange } from '@/shared/selection';
+import { useDOMManipulation } from '@/shared/DOMManipulation';
 import { CommandsItem } from '@/@types/index';
 
-const useCommandsHandler = (editorBody: Ref<typeof VEditorBody>) => {
+const useCommandsHandler = () => {
   const actions: Record<string, Function> = {
     textAlign(el: HTMLDivElement, value: string) {
-      const { range, moveCursorToEnd } = useSelection();
+      const { range, moveCursorToEnd } = useRange();
       const common = range.commonAncestorContainer;
       let newElement;
 
@@ -51,7 +49,7 @@ const useCommandsHandler = (editorBody: Ref<typeof VEditorBody>) => {
     },
 
     list(el: HTMLDivElement, value: string) {
-      const { range, moveCursorToEnd } = useSelection();
+      const { range, moveCursorToEnd } = useRange();
       const common = range.commonAncestorContainer;
 
       if (!el.contains(common) || common.isSameNode(el)) return;
@@ -80,12 +78,55 @@ const useCommandsHandler = (editorBody: Ref<typeof VEditorBody>) => {
       el.replaceChild(newEl, myNode);
       moveCursorToEnd(newEl);
     },
+
+    color(el: HTMLDivElement, value: string): void {
+      const { range, setRange, moveCursorToEnd } = useRange();
+      const { getEndNode } = useDOMManipulation();
+      const { startContainer, startOffset, endOffset, endContainer } = range as Range & { startContainer: Text };
+      const endSpan = document.createElement('span');
+      const startSpan = document.createElement('span');
+      const startTextNode = document.createTextNode(startContainer.textContent?.slice(startOffset) || '\u200B');
+      const endTextNode = document.createTextNode('');
+
+      if (!el.contains(startContainer)) return moveCursorToEnd(el.lastChild || el);
+
+      startSpan.style.color = value;
+      endSpan.style.color = value;
+      startSpan.appendChild(startTextNode);
+      startContainer.replaceData(startOffset, -1, '');
+      startContainer.after(startSpan);
+
+      if (startContainer.isSameNode(endContainer)) return setRange({ node: startTextNode }, { node: startTextNode });
+
+      const endNode = getEndNode(startTextNode, endContainer, (n) => {
+        const sibling = (n.nodeType === 3 ? n.parentElement : n) as HTMLElement;
+        sibling.style.color = value;
+      });
+
+      let textEndNode = (endNode.nodeType === 3 ? endNode : endNode.lastChild) as Text | null;
+
+      if (!textEndNode) {
+        textEndNode = document.createTextNode('');
+        endNode.appendChild(textEndNode);
+      }
+
+      endTextNode.textContent = (textEndNode.textContent || '').slice(0, endOffset);
+      endSpan.appendChild(endTextNode);
+      textEndNode.replaceData(0, endOffset, '');
+
+      if (endNode.isSameNode(textEndNode)) {
+        const parentEndNode = endNode.parentNode as Node;
+        parentEndNode.insertBefore(endSpan, textEndNode);
+      } else {
+        endNode.insertBefore(endSpan, textEndNode);
+      }
+
+      return setRange({ node: startTextNode }, { node: endTextNode });
+    },
   };
 
   const onExecuteCommand = (rule: CommandsItem) => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-    // @ts-ignore
-    actions[rule.command](editorBody.value.$data.textContainer, rule.value);
+    actions[rule.command](document.querySelector('#text-editor'), rule.value);
   };
 
   return { onExecuteCommand };
@@ -113,10 +154,8 @@ export default defineComponent({
 
   setup() {
     const editorBody = ref(VEditorBody);
-    const { onExecuteCommand } = useCommandsHandler(editorBody);
-    const {
-      fontSize, fontColor, textAlign, listType,
-    } = useProepertiesControll();
+    const { onExecuteCommand } = useCommandsHandler();
+    const { fontSize, fontColor, textAlign, listType } = useProepertiesControll();
 
     return {
       fontSize,

@@ -16,6 +16,7 @@ import {
   SetupContext,
 } from '@vue/composition-api';
 import { useSelection } from '@/shared/selection';
+import { rgbToHex } from '@/shared/color';
 
 const useSelectionHandle = (emit: SetupContext['emit']) => {
   const textContainer = ref(document.createElement('div'));
@@ -31,7 +32,7 @@ const useSelectionHandle = (emit: SetupContext['emit']) => {
       return;
     }
 
-    emit('updateModel:fontColor', getStyle(element, 'color'));
+    emit('updateModel:fontColor', rgbToHex(getStyle(element, 'color')));
     emit('updateModel:fontSize', getStyle(element, 'font-size'));
     emit('updateModel:textAlign', getStyle(element, 'text-align'));
 
