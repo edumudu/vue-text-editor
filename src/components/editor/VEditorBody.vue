@@ -9,12 +9,7 @@
 </template>
 
 <script lang="ts">
-import {
-  defineComponent,
-  onBeforeUnmount,
-  ref,
-  SetupContext,
-} from '@vue/composition-api';
+import { defineComponent, onBeforeUnmount, ref, SetupContext } from '@vue/composition-api';
 import { useSelection } from '@/shared/selection';
 import { rgbToHex } from '@/shared/color';
 

@@ -21,9 +21,7 @@
 </template>
 
 <script lang="ts">
-import {
-  defineComponent, reactive, ref, SetupContext,
-} from '@vue/composition-api';
+import { defineComponent, reactive, SetupContext } from '@vue/composition-api';
 import VEditorGroup from '@/components/editor/group/VEditorGroup.vue';
 import { CommandsItem } from '@/@types/index';
 
