@@ -16,6 +16,12 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'max-len': ['error', 120],
     'import/prefer-default-export': 'off',
+    'object-curly-newline': ['error', {
+      'ObjectExpression': { 'multiline': true },
+      'ObjectPattern': { 'multiline': true },
+      'ImportDeclaration': 'never',
+      'ExportDeclaration': { 'multiline': true, 'minProperties': 5 }
+    }]
   },
   overrides: [
     {

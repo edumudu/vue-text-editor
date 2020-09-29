@@ -11,6 +11,12 @@
       :selected="listType"
       @changeCommand="onChangeCommand"
     />
+
+    <input
+      type="color"
+      :value="fontColor"
+      @change="e => $emit('execute-command', { command: 'color', value: e.target.value })"
+    />
   </div>
 </template>
 
@@ -37,6 +43,11 @@ export default defineComponent({
     },
 
     listType: {
+      type: String,
+      required: true,
+    },
+
+    fontColor: {
       type: String,
       required: true,
     },
