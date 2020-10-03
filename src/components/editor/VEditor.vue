@@ -30,53 +30,76 @@ import { CommandsItem } from '@/@types/index';
 const useCommandsHandler = () => {
   const actions: Record<string, Function> = {
     textAlign(el: HTMLDivElement, value: string) {
-      const { range, moveCursorToEnd } = useRange();
+      const { range, setRange, moveCursorToEnd } = useRange();
+      const { getParentByTagName } = useDOMManipulation();
       const common = range.commonAncestorContainer;
       let newElement;
 
-      if (!el.contains(common) || common.isSameNode(el)) return;
+      if (!el.contains(common)) return moveCursorToEnd(common.lastChild || common);
 
-      if (common.parentElement?.isSameNode(el) && common.parentElement?.nodeType === 3) {
-        newElement = document.createElement('div');
+      if (common.isSameNode(el)) {
+        if (!el.childElementCount) {
+          newElement = document.createElement('div');
+          newElement.style.textAlign = value;
+          newElement.textContent = '\u200B';
+          common.appendChild(newElement);
+
+          return moveCursorToEnd(newElement || common.lastChild || common);
+        }
+
+        let element = common.firstChild as HTMLElement;
+        const { startContainer, endContainer, startOffset, endOffset } = range;
+        let wrapper;
+
+        if (element.nodeType === 3) {
+          wrapper = document.createElement('div');
+          wrapper.appendChild(element.cloneNode());
+          common.replaceChild(wrapper, element);
+          element = wrapper;
+        }
+
+        const start = {
+          node: startContainer as Text,
+          offSet: startOffset,
+        };
+
+        const end = {
+          node: endContainer as Text,
+          offSet: endOffset,
+        };
+
+        while (!element.contains(wrapper || startContainer)) {
+          element = element.nextSibling as HTMLElement;
+        }
+
+        while (element) {
+          element.style.textAlign = value;
+          element = element.nextSibling as HTMLElement;
+        }
+
+        return setRange(start, end);
+      }
+
+      if (common.parentElement?.isSameNode(el)) {
+        newElement = (common.nodeType === 3 ? document.createElement('div') : common) as HTMLElement;
         newElement.appendChild(common.cloneNode());
         el.replaceChild(newElement, common);
       } else {
-        newElement = (common.nodeType === 3 ? common.parentElement : common) as HTMLElement;
+        const parent = getParentByTagName(common, ['div', 'li']) as HTMLElement;
+
+        if (parent.isSameNode(el)) {
+          newElement = document.createElement('div');
+
+          newElement.append(...el.childNodes);
+          el.appendChild(newElement);
+        } else {
+          newElement = parent;
+        }
       }
 
       newElement.style.textAlign = value;
-      moveCursorToEnd(newElement.lastChild as HTMLElement);
-    },
 
-    list(el: HTMLDivElement, value: string) {
-      const { range, moveCursorToEnd } = useRange();
-      const common = range.commonAncestorContainer;
-
-      if (!el.contains(common) || common.isSameNode(el)) return;
-
-      const getChild = (node: HTMLElement | Node): HTMLElement => {
-        if (node.parentElement?.isSameNode(el)) return node as HTMLElement;
-
-        return getChild(node.parentElement as HTMLElement);
-      };
-
-      const myNode = getChild(common);
-      const newEl = document.createElement(value);
-      const li = document.createElement('li');
-
-      if (myNode.firstChild?.nodeName === 'LI') {
-        newEl.append(...Array.from(myNode.children));
-      } else {
-        newEl.appendChild(li);
-
-        Array.from(myNode.childNodes.length ? myNode.childNodes : [myNode.cloneNode()], (item) => {
-          li.appendChild(item);
-          return item;
-        });
-      }
-
-      el.replaceChild(newEl, myNode);
-      moveCursorToEnd(newEl);
+      return moveCursorToEnd(newElement.lastChild as HTMLElement);
     },
 
     color(el: HTMLDivElement, value: string): void {
@@ -85,18 +108,35 @@ const useCommandsHandler = () => {
       const { startContainer, startOffset, endOffset, endContainer } = range as Range & { startContainer: Text };
       const endSpan = document.createElement('span');
       const startSpan = document.createElement('span');
-      const startTextNode = document.createTextNode(startContainer.textContent?.slice(startOffset) || '\u200B');
+      const startTextNode = document.createTextNode('');
       const endTextNode = document.createTextNode('');
 
       if (!el.contains(startContainer)) return moveCursorToEnd(el.lastChild || el);
 
+      startContainer.textContent = startContainer.textContent?.replace(/\s/g, '\u0020') || '';
+      endContainer.textContent = endContainer.textContent?.replace(/\s/g, '\u0020') || '';
+      startTextNode.textContent = startContainer.textContent?.slice(startOffset) || '\u200B';
       startSpan.style.color = value;
       endSpan.style.color = value;
-      startSpan.appendChild(startTextNode);
-      startContainer.replaceData(startOffset, -1, '');
-      startContainer.after(startSpan);
 
-      if (startContainer.isSameNode(endContainer)) return setRange({ node: startTextNode }, { node: startTextNode });
+      if (startContainer.isSameNode(endContainer)) {
+        const nodeValue = startTextNode.textContent || '';
+        const offSetDiff = endOffset - startOffset;
+        const afterTextNode = document.createTextNode(nodeValue.slice(offSetDiff));
+
+        startTextNode.textContent = nodeValue.slice(0, offSetDiff);
+
+        startSpan.appendChild(startTextNode);
+        startContainer.replaceData(startOffset, -1, '');
+        startContainer.after(startSpan);
+        startSpan.after(afterTextNode);
+
+        return range.selectNodeContents(startSpan);
+      }
+
+      startSpan.appendChild(startTextNode);
+      startContainer.replaceData(startOffset, startTextNode.nodeValue?.length || -1, '');
+      startContainer.after(startSpan);
 
       const endNode = getEndNode(startTextNode, endContainer, (n) => {
         const sibling = (n.nodeType === 3 ? n.parentElement : n) as HTMLElement;
