@@ -16,5 +16,14 @@ export const useDOMManipulation = () => {
     return getEndNode(n.parentNode as NodeText, endNode, wrapCallback);
   };
 
-  return { getEndNode };
+  const getParentByTagName = (node: Node, names: string | string[]): Node => {
+    const namesUpperCase = typeof names === 'string' ? [names.toLowerCase()] : names.map((name) => name.toUpperCase());
+
+    return namesUpperCase.includes(node.nodeName) ? node : getParentByTagName(node.parentNode as Node, names);
+  };
+
+  return {
+    getEndNode,
+    getParentByTagName,
+  };
 };

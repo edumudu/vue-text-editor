@@ -6,12 +6,6 @@
       @changeCommand="onChangeCommand"
     />
 
-    <v-editor-group
-      :items="commands.lists"
-      :selected="listType"
-      @changeCommand="onChangeCommand"
-    />
-
     <input
       type="color"
       :value="fontColor"
@@ -73,19 +67,6 @@ export default defineComponent({
           command: 'textAlign',
           value: 'justify',
           icon: 'format-align-justify',
-        },
-      ],
-
-      lists: [
-        {
-          command: 'list',
-          value: 'ul',
-          icon: 'format-list-bulleted',
-        },
-        {
-          command: 'list',
-          value: 'ol',
-          icon: 'format-list-numbered',
         },
       ],
     });
